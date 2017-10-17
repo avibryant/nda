@@ -1,2 +1,2 @@
-# ad
-scala reverse-mode autodifferentiation
+# nda
+N-Dimensional Arrays in Scala
