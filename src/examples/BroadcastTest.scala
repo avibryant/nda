@@ -1,7 +1,7 @@
 package nda
 
-object Example {
-    def example[Foo,Bar] = {
+object BroadcastTest {
+    def test[Foo,Bar] = {
         val scalar = One()
         val vector = N[Foo]
         val vector2 = N[Bar]
@@ -39,20 +39,9 @@ object Example {
         val z18: N[Bar] By N[Foo] = Shape.broadcast(matrix2, scalar)
         val z19: N[Foo] By N[Foo] = Shape.broadcast(matrix3, scalar)
 
-        val z20: N[Foo] By (N[Foo] By One) = matrix3.newAxis
-        val z21: N[Foo] By (N[Foo] By (One By One)) = z20.newAxis
+        val z20: N[Foo] By (N[Foo] By One) = Shape.newAxis(matrix3)
+        val z21: N[Foo] By (N[Foo] By (One By One)) = Shape.newAxis(z20)
+
+        val z22: N[Foo] By N[Foo] = Shape.compact(z20)
     }
 }
-
-/*
-        val points =
-            List((,),(,))
-        
-        val errors = points.map{case (x,y) =>
-            val pred = a * x + b
-            val dist = y - pred
-            dist * dist
-        }
-
-        val error = errors.sum
-*/

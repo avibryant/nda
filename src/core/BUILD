@@ -1,5 +1,5 @@
 scala_library(
-    name = "src",
+    name = "core",
     srcs = glob(["*.scala"]),
     visibility = ["//visibility:public"]
 )
