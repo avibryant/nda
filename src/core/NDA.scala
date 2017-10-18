@@ -12,6 +12,8 @@ sealed trait NDA[X<:Shape] {
 //        NewAxis(this)
     def sum[Y <: Dimension, Z <: Shape](implicit e:Expand[Z,Y,X]): NDA[Z] =
         Reduce(this, AddOp)
+    def product[Y <: Dimension, Z <: Shape](implicit e:Expand[Z,Y,X]): NDA[Z] =
+        Reduce(this, MultiplyOp)
 }
 
 case class Scalar(value: Double) extends NDA[One] {
@@ -32,7 +34,7 @@ case class Unary[X<:Shape](original: NDA[X], op: UnaryOp) extends NDA[X] {
     val shape = original.shape
 }
 
-case class Reduce[X<:Shape,Y<:Dimension,Z<:Shape](original: NDA[Z], op: BinaryOp)(
+case class Reduce[X<:Shape,Y<:Dimension,Z<:Shape](original: NDA[Z], op: AssociativeOp)(
     implicit e: Expand[X,Y,Z]
 ) extends NDA[X] {
     val shape = e.compact(original.shape)
