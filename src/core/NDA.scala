@@ -8,21 +8,17 @@ sealed trait NDA[X<:Shape] {
         Binary(this, other, SubtractOp)
     def *[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcast[X,Y,Z]): NDA[Z] =
         Binary(this, other, MultiplyOp)
-//    def newAxis[Z <: Shape](implicit e: Expand[X,One,Z]): NDA[Z] =
-//        NewAxis(this)
-    def sum[Y <: Dimension, Z <: Shape](implicit e:Expand[Z,Y,X]): NDA[Z] =
+    def newAxis: NDA[By[One,X]] =
+        NewAxis(this)
+    def sum[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
         Reduce(this, AddOp)
-    def product[Y <: Dimension, Z <: Shape](implicit e:Expand[Z,Y,X]): NDA[Z] =
+    def product[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
         Reduce(this, MultiplyOp)
+    def sumAll: NDA[One] = ReduceAll(this, AddOp)
+    def productAll: NDA[One] = ReduceAll(this, MultiplyOp)
 }
 
-case class Scalar(value: Double) extends NDA[One] {
-    val shape = One()
-}
-
-case class Vector[A](values: Array[Double]) extends NDA[N[A]] {
-    val shape = N[A]()
-}
+case class Variable[X <: Shape](name: String)(implicit val shape: X) extends NDA[X]
 
 case class Binary[X<:Shape, Y<:Shape, Z<:Shape](left: NDA[X], right: NDA[Y], op: BinaryOp)(
     implicit b: Broadcast[X,Y,Z]
@@ -34,8 +30,16 @@ case class Unary[X<:Shape](original: NDA[X], op: UnaryOp) extends NDA[X] {
     val shape = original.shape
 }
 
-case class Reduce[X<:Shape,Y<:Dimension,Z<:Shape](original: NDA[Z], op: AssociativeOp)(
-    implicit e: Expand[X,Y,Z]
-) extends NDA[X] {
-    val shape = e.compact(original.shape)
+case class Reduce[X<:Shape,Y<:Shape](original: NDA[X], op: AssociativeOp)(
+    implicit ev: X <:< By[_,Y]
+) extends NDA[Y] {
+    val shape = ev(original.shape).inner
+}
+
+case class ReduceAll[X<:Shape](original: NDA[X], op: AssociativeOp) extends NDA[One] {
+    val shape = One()
+}
+
+case class NewAxis[X<:Shape](original: NDA[X]) extends NDA[By[One,X]] {
+    val shape = One().by(original.shape)
 }

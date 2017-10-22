@@ -20,17 +20,17 @@ trait BroadcastLowPriority {
     implicit def n2n[A] = new Broadcast[N[A],N[A],N[A]] {
         def apply(x: N[A], y: N[A]) = x
     }
-
-    implicit def leftInner[X <: Dimension, B<:Shape, C<:Shape, D<:Shape](
-        implicit innerBroadcast: Broadcast[B,C,D]        
-    ) = new Broadcast[By[X,B], C, By[X,D]] {
-        def apply(x: By[X,B], y: C) = By(x.outer, innerBroadcast(x.inner,y))
+    
+    implicit def dim2By[X <: Dimension, Y <: Dimension, Z <: Dimension, B <: Shape](
+        implicit outerBroadcast: Broadcast[X, Y, Z]
+    ) = new Broadcast[X, By[Y,B], By[Z,B]] {
+        def apply(x: X, y: By[Y,B]) = By(outerBroadcast(x, y.outer), y.inner)
     }
 
-    implicit def rightInner[X <: Dimension, B<:Shape, C<:Shape, D<:Shape](
-        implicit innerBroadcast: Broadcast[B,C,D]        
-    ) = new Broadcast[B,By[X,C],By[X,D]] {
-        def apply(x: B, y: By[X,C]) = By(y.outer, innerBroadcast(x,y.inner))
+    implicit def by2Dim[X <: Dimension, Y <: Dimension, Z <: Dimension, B <: Shape](
+        implicit outerBroadcast: Broadcast[X, Y, Z]
+    ) = new Broadcast[By[X,B], Y, By[Z,B]] {
+        def apply(x: By[X,B], y: Y) = By(outerBroadcast(x.outer, y), x.inner)
     }
 }
 

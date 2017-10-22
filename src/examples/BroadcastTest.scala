@@ -25,12 +25,13 @@ object BroadcastTest {
         //fails to compile
         //val z9 = Shape.broadcast(matrix2, matrix3)
 
-        val z10: One By N[Foo] = Shape.broadcast(vector, matrix1)
-        val z11: N[Bar] By N[Foo] = Shape.broadcast(vector, matrix2)
+        val z10: N[Foo] By N[Foo] = Shape.broadcast(vector, matrix1)
+        val z11: N[Bar] By N[Foo] = Shape.broadcast(vector2, matrix2)
         val z12: N[Foo] By N[Foo] = Shape.broadcast(vector, matrix3)
+        val z13: N[Bar] By N[Foo] = Shape.broadcast(vector2, matrix1)
 
         //fails to compile
-        //val z13 = Shape.broadcast(vector2, matrix1)
+        //val z13b = Shape.broadcast(vector, matrix2)
 
         val z14: One By N[Foo] = Shape.broadcast(scalar, matrix1)
         val z15: N[Bar] By N[Foo] = Shape.broadcast(scalar, matrix2)
@@ -38,10 +39,5 @@ object BroadcastTest {
         val z17: One By N[Foo] = Shape.broadcast(matrix1, scalar)
         val z18: N[Bar] By N[Foo] = Shape.broadcast(matrix2, scalar)
         val z19: N[Foo] By N[Foo] = Shape.broadcast(matrix3, scalar)
-
-        val z20: N[Foo] By (N[Foo] By One) = Shape.newAxis(matrix3)
-        val z21: N[Foo] By (N[Foo] By (One By One)) = Shape.newAxis(z20)
-
-        val z22: N[Foo] By N[Foo] = Shape.compact(z20)
     }
 }

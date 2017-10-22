@@ -17,9 +17,7 @@ object Shape {
     def broadcast[X <: Shape,Y <: Shape,Z <: Shape](x: X, y: Y)(implicit b: Broadcast[X,Y,Z]): Z
         = b(x,y)
 
-    def newAxis[X <: Shape, Z <: Shape](x: X)(implicit e: Expand[X,One,Z]): Z
-        = e.expand(x, One())
-    
-    def compact[X <: Shape, Y <: Dimension, Z <: Shape](z: Z)(implicit e: Expand[X,Y,Z]): X
-        = e.compact(z)
+    implicit def one: One = One()
+    implicit def n[A]: N[A] = N[A]()
+    implicit def by[D<:Dimension,X<:Shape](implicit outer: D, inner:X): By[D,X] = By(outer, inner)
 }
