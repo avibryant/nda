@@ -43,3 +43,4 @@ case class ReduceAll[X<:Shape](original: NDA[X], op: AssociativeOp) extends NDA[
 case class NewAxis[X<:Shape](original: NDA[X]) extends NDA[By[One,X]] {
     val shape = One().by(original.shape)
 }
+

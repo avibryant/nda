@@ -2,9 +2,9 @@ package nda
 
 object BroadcastTest {
     def test[Foo,Bar] = {
-        val scalar = One()
-        val vector = N[Foo]
-        val vector2 = N[Bar]
+        val scalar = Shape.one
+        val vector = Shape.n[Foo]
+        val vector2 = Shape.n[Bar]
 
         val z1: One = Shape.broadcast(scalar, scalar)
         val z2: N[Foo] = Shape.broadcast(vector, vector)
@@ -14,9 +14,9 @@ object BroadcastTest {
         //fails to compile
         //val z5 = Shape.broadcast(vector, vector2)
 
-        val matrix1: One By N[Foo] = scalar by vector
-        val matrix2: N[Bar] By N[Foo] = vector2 by vector
-        val matrix3: N[Foo] By N[Foo] = vector by vector
+        val matrix1: One By N[Foo] = implicitly
+        val matrix2: N[Bar] By N[Foo] = implicitly
+        val matrix3: N[Foo] By N[Foo] = implicitly
 
         val z6: One By N[Foo] = Shape.broadcast(matrix1, matrix1)
         val z7: N[Bar] By N[Foo] = Shape.broadcast(matrix2, matrix2)
