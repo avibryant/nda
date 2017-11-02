@@ -9,7 +9,7 @@ object Regression {
         val x = Variable[N[Columns] By N[Rows]]("x")
         val y = Variable[N[Rows]]("y")
 
-        val predictions: NDA[N[Rows]] = (x * w).sum
+        val predictions: NDA[N[Rows]] = (x * w).sumOuter
         val errors = predictions - y
         val loss = (errors * errors).sumAll
         (x, y, w, loss)
@@ -39,7 +39,12 @@ object Regression {
     }
 
     def main(args: Array[String]) {
-        val rows: List[(List[Double], Double)] = ???
+        val rows: List[(List[Double], Double)] =         
+            List(
+                (List(1.0,2.0,3.0), 3.0),
+                (List(2.0,4.0,6.0), 6.0)
+            )
+
         println(linearRegression(rows))
     }
 }

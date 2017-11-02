@@ -10,9 +10,9 @@ sealed trait NDA[X<:Shape] {
         Binary(this, other, MultiplyOp)
     def newAxis: NDA[By[One,X]] =
         NewAxis(this)
-    def sum[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
+    def sumOuter[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
         Reduce(this, AddOp)
-    def product[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
+    def productOuter[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
         Reduce(this, MultiplyOp)
     def sumAll: NDA[One] = ReduceAll(this, AddOp)
     def productAll: NDA[One] = ReduceAll(this, MultiplyOp)
