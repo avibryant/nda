@@ -9,7 +9,7 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[String,ShapedArray
             variables + (variable.name -> ShapedArray(size.toList, array)), 
             HashMap[NDA[_],ShapedArray[T]]())
     
-    def run[X<:Shape](nda: NDA[X]): Array[T] =
+    def run(nda: NDA[_]): Array[T] =
         forwards(nda).array
 
     private def forwards[_](nda: NDA[_]): ShapedArray[T] =

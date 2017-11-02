@@ -16,9 +16,10 @@ object Regression {
     }
 
     val rand = new scala.util.Random
-    def linearRegression(rows: List[(List[Double], Double)]): Double = {
+    def linearRegression(rows: List[(List[Double], Double)]): (Double, List[Double]) = {
         val (x, y, w, loss) = linearRegressionModel
-        
+        val wGrad = w.gradient(loss)
+
         val rowWidth = rows.head._1.size
         val wData: Array[Double] = 1.to(rowWidth).toArray.map{i => rand.nextGaussian}
         
@@ -35,7 +36,8 @@ object Regression {
                 .feed(w, wData)
 
         val initialLoss: Array[Double] = session.run(loss)
-        initialLoss(0)
+        val initialGradient: Array[Double] = session.run(wGrad)
+        (initialLoss(0), initialGradient.toList)
     }
 
     def main(args: Array[String]) {

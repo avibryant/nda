@@ -16,6 +16,7 @@ sealed trait NDA[X<:Shape] {
         Reduce(this, MultiplyOp)
     def sumAll: NDA[One] = ReduceAll(this, AddOp)
     def productAll: NDA[One] = ReduceAll(this, MultiplyOp)
+    def gradient(loss: NDA[One]): NDA[X] = Gradient.derive(this, loss)
 }
 
 case class Variable[X <: Shape](name: String)(implicit val shape: X) extends NDA[X]
