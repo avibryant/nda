@@ -11,14 +11,14 @@ object Regression {
 
         val predictions: NDA[N[Rows]] = (x * w).sumOuter
         val errors = predictions - y
-        val loss = (errors * errors).sumAll
+        val loss: NDA[One] = (errors * errors).sum
         (x, y, w, loss)
     }
 
     val rand = new scala.util.Random
     def linearRegression(rows: List[(List[Double], Double)]): (Double, List[Double]) = {
         val (x, y, w, loss) = linearRegressionModel
-        val wGrad = w.gradient(loss)
+        val wGrad = w //.gradient(loss)
 
         val rowWidth = rows.head._1.size
         val wData: Array[Double] = 1.to(rowWidth).toArray.map{i => rand.nextGaussian}

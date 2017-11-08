@@ -1,6 +1,11 @@
 package nda
 
+//this (and only this) is written with performance as the top priority
+//I'm probably making all kinds of incorrect assumptions about what will or won't be fast
+//(eg about what I can expect to be inlined, etc)
 object DoubleEvaluator extends Evaluator[Double] {
+    def constant(value: Double) = ShapedArray(List(1), Array(value))
+
     def binary(left: ShapedArray[Double], right: ShapedArray[Double], op: BinaryOp) = {
         val resultRank = left.size.size.max(right.size.size)
         val leftSize = pad(left.size, resultRank)
@@ -29,17 +34,11 @@ object DoubleEvaluator extends Evaluator[Double] {
                     resultArray(i) = leftArray(leftIndex) * rightArray(rightIndex)
                     i -= 1
                 }
-            case SubtractOp =>
-                while(i >= 0) {
-                    val leftIndex = computeIndex(i, resultSize, leftSize)
-                    val rightIndex = computeIndex(i, resultSize, rightSize)
-                    resultArray(i) = leftArray(leftIndex) - rightArray(rightIndex)
-                    i -= 1
-                }
         }
         result
     }
 
+    //hope this inlines
     private def computeIndex(i: Int, resultSize: Array[Int], size: Array[Int]): Int = {
         var j = i
         var k = 0
@@ -72,8 +71,9 @@ object DoubleEvaluator extends Evaluator[Double] {
         result
     }
 
-    def reduce(original: ShapedArray[Double], op: AssociativeOp) = {
-        val newSize = original.size.tail
+    //Only actually works for sumOuter at the moment
+    def reduce(original: ShapedArray[Double], op: BinaryOp) = {
+        val newSize = 1 :: original.size.tail
         val result = alloc(newSize)
         val period = original.size.head
         val originalArray = original.array
@@ -98,27 +98,7 @@ object DoubleEvaluator extends Evaluator[Double] {
         result
     }
 
-    def reduceAll(original: ShapedArray[Double], op: AssociativeOp) = {
-        var result = zero(op)
-        val originalArray = original.array
-        var i = originalArray.size - 1
-        op match {
-            case AddOp =>
-                while(i >= 0) {
-                    result += originalArray(i)
-                    i -= 1
-                }
-            case MultiplyOp =>
-                while(i >= 0) {
-                    result *= originalArray(i)
-                    i -= 1
-                }
-        }
-        ShapedArray(List(1), Array(result))
-    }
-
-
-    private def zero(op: AssociativeOp): Double = op match {
+    private def zero(op: BinaryOp): Double = op match {
         case AddOp => 0.0
         case MultiplyOp => 1.0
     }

@@ -1,47 +1,35 @@
 package nda
 
 sealed trait NDA[X<:Shape] {
-    def shape: X
-    def +[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcast[X,Y,Z]): NDA[Z] =
-        Binary(this, other, AddOp)
-    def -[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcast[X,Y,Z]): NDA[Z] =
-        Binary(this, other, SubtractOp)
-    def *[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcast[X,Y,Z]): NDA[Z] =
-        Binary(this, other, MultiplyOp)
+    def +[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcaster[X,Y,Z]): NDA[Z] =
+        Binary(this, other, AddOp, b)
+    def -[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcaster[X,Y,Z]): NDA[Z] = {
+        val negated: NDA[Y] = other * Constant(-1)
+        this + negated
+    }
+    def *[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcaster[X,Y,Z]): NDA[Z] =
+        Binary(this, other, MultiplyOp, b)
+    def dropAxis[Y <: Shape](implicit ev: X <:< By[One,Y]): NDA[Y] =
+        DropAxis(this.asInstanceOf[NDA[By[One,Y]]])
     def newAxis: NDA[By[One,X]] =
         NewAxis(this)
-    def sumOuter[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
+    def sum[Y <: Shape](implicit b: Broadcaster[Y,X,X]): NDA[Y] =
         Reduce(this, AddOp)
-    def productOuter[Y <: Shape](implicit ev: X <:< By[_,Y]): NDA[Y] =
-        Reduce(this, MultiplyOp)
-    def sumAll: NDA[One] = ReduceAll(this, AddOp)
-    def productAll: NDA[One] = ReduceAll(this, MultiplyOp)
-    def gradient(loss: NDA[One]): NDA[X] = Gradient.derive(this, loss)
+    def sumOuter[Y <: Shape](implicit b: Broadcaster[By[One,Y],X,X]): NDA[Y] =
+        sum[By[One,Y]].dropAxis
 }
 
-case class Variable[X <: Shape](name: String)(implicit val shape: X) extends NDA[X]
+case class Variable[X <: Shape](name: String) extends NDA[X]
 
-case class Binary[X<:Shape, Y<:Shape, Z<:Shape](left: NDA[X], right: NDA[Y], op: BinaryOp)(
-    implicit b: Broadcast[X,Y,Z]
-) extends NDA[Z] {
-    val shape = b(left.shape, right.shape)
-}
+case class Constant(value: Double) extends NDA[One]
 
-case class Unary[X<:Shape](original: NDA[X], op: UnaryOp) extends NDA[X] {
-    val shape = original.shape
-}
+case class Binary[X<:Shape, Y<:Shape, Z<:Shape](left: NDA[X], right: NDA[Y], op: BinaryOp, b: Broadcaster[X,Y,Z])
+    extends NDA[Z]
 
-case class Reduce[X<:Shape,Y<:Shape](original: NDA[X], op: AssociativeOp)(
-    implicit ev: X <:< By[_,Y]
-) extends NDA[Y] {
-    val shape = ev(original.shape).inner
-}
+case class Unary[X<:Shape](original: NDA[X], op: UnaryOp) extends NDA[X]
 
-case class ReduceAll[X<:Shape](original: NDA[X], op: AssociativeOp) extends NDA[One] {
-    val shape = One()
-}
+case class Reduce[X<:Shape,Y<:Shape](original: NDA[X], op: BinaryOp)(implicit val b: Broadcaster[Y,_,X])
+    extends NDA[Y]
 
-case class NewAxis[X<:Shape](original: NDA[X]) extends NDA[By[One,X]] {
-    val shape = One().by(original.shape)
-}
-
+case class NewAxis[X<:Shape](original: NDA[X]) extends NDA[By[One,X]]
+case class DropAxis[X<:Shape](original: NDA[By[One,X]]) extends NDA[X]

@@ -17,7 +17,8 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[String,ShapedArray
             case Some(t) => t
             case None => nda match {
                 case Variable(name) => variables(name)
-                case Binary(left, right, op) =>
+                case Constant(value) => evaluator.constant(value)
+                case Binary(left, right, op, b) =>
                     val a1 = forwards(left)
                     updateCache(right, nda){a2 => evaluator.binary(a1, a2, op)}
 
@@ -27,11 +28,12 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[String,ShapedArray
                 case Reduce(original, op) =>
                     updateCache(original, nda){a => evaluator.reduce(a, op)}
 
-                case ReduceAll(original, op) =>
-                    updateCache(original, nda){a => evaluator.reduceAll(a, op)}
-
                 case NewAxis(original) =>
                     updateCache(original, nda){a => a.newAxis}
+ 
+                case DropAxis(original) =>
+                    updateCache(original, nda){a => a.dropAxis}
+
             }
         }
 
