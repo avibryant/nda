@@ -12,6 +12,8 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[String,ShapedArray
     def run(nda: NDA[_]): Array[T] =
         forwards(nda).array
 
+    def update[X <: Shape : Size](from: Variable[X], to: NDA[X]): Session[T] = feed(from, run(to))
+
     private def forwards[_](nda: NDA[_]): ShapedArray[T] =
         cache.get(nda) match {
             case Some(t) => t
