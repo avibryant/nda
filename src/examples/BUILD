@@ -2,7 +2,7 @@ scala_library(
     name = "examples",
     srcs = glob(["*.scala"]),
     visibility = ["//visibility:public"],
-    deps = ["//src/core", "//src/session"]
+    deps = ["//src/core", "//src/session", "//src/gradient"]
 )
 
 scala_binary(

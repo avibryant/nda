@@ -62,38 +62,35 @@ object DoubleEvaluator extends Evaluator[Double] {
         val resultArray = result.array
         var i = originalArray.size - 1
         op match {
-            case LogOp =>
+            case MinusOp =>
                 while(i >= 0) {
-                    resultArray(i) = Math.log(originalArray(i))
+                    resultArray(i) = originalArray(i) * -1
                     i -= 1
                 }
+            case IdentityOp =>
+                while(i >= 0) {
+                    resultArray(i) = 1.0
+                    i -= 1
+                }                
         }
         result
     }
 
-    //Only actually works for sumOuter at the moment
-    def reduce(original: ShapedArray[Double], op: BinaryOp) = {
-        val newSize = 1 :: original.size.tail
+    def reduce(original: ShapedArray[Double], op: BinaryOp, newSize: List[Int]) = {
         val result = alloc(newSize)
-        val period = original.size.head
+        val resultArray = result.array
+        val resultSize = pad(result.size, original.size.size).toArray
         val originalArray = original.array
+        val originalSize = original.size.toArray
         var i = originalArray.size - 1
-        while(i >= 0) {
-            var acc = zero(op)
-            val nextPeriod = i - period
-            op match {
-                case AddOp =>
-                    while(i > nextPeriod) {
-                        acc += originalArray(i)
-                        i -= 1
-                    }
-                case MultiplyOp =>
-                    while(i > nextPeriod) {
-                        acc *= originalArray(i)
-                        i -= 1
-                    }
-            }
-            result.array((i+1)/period) = acc
+        op match {
+            case AddOp =>
+                while(i > 0) {
+                    val resultIndex = computeIndex(i, originalSize, resultSize)
+                    resultArray(resultIndex) += originalArray(i)
+                    i -= 1
+                }
+            case MultiplyOp => ???
         }
         result
     }

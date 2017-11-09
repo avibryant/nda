@@ -18,15 +18,15 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[String,ShapedArray
             case None => nda match {
                 case Variable(name) => variables(name)
                 case Constant(value) => evaluator.constant(value)
-                case Binary(left, right, op, b) =>
+                case Binary(left, right, op) =>
                     val a1 = forwards(left)
                     updateCache(right, nda){a2 => evaluator.binary(a1, a2, op)}
 
                 case Unary(original, op) =>
                     updateCache(original, nda){a => evaluator.unary(a, op)}
 
-                case Reduce(original, op) =>
-                    updateCache(original, nda){a => evaluator.reduce(a, op)}
+                case r @ Reduce(original, op) =>
+                    updateCache(original, nda){a => evaluator.reduce(a, op, r.b.left(a.size))}
 
                 case NewAxis(original) =>
                     updateCache(original, nda){a => a.newAxis}

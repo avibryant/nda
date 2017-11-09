@@ -1,9 +1,5 @@
 package nda
 
-trait Gradient[X <: Shape] {
-    def toNDA: NDA[X]
-}
-
 trait PartialGradient[X <: Shape] {
     def toNDA: NDA[X]
 }
@@ -29,18 +25,27 @@ case class PGRightBinary[X <: Shape, Y <: Shape, Z <: Shape](child: Binary[X,Y,Z
 }
 
 case class PGUnary[X <: Shape](child: Unary[X], gradient: Gradient[X]) extends PartialGradient[X]  {
-        def toNDA = ???
+        def toNDA = child.op match {
+            case IdentityOp => child * Constant(0.0)
+            case MinusOp => gradient.toNDA * Constant(-1.0)
+        }
 }
 
 case class PGReduce[X <: Shape, Y <: Shape](child: Reduce[X,Y], gradient: Gradient[Y]) extends PartialGradient[X]  {
         def toNDA = child.op match {
-            case AddOp => ???
+            case AddOp =>
+                implicit val b: Broadcaster[X,Y,X] = child.b.leftResult
+                 child.original.identity * gradient.toNDA
             case MultiplyOp => ???
         }
 }
 
 case class PGNewAxis[X <: Shape](child: NewAxis[X], gradient: Gradient[By[One,X]]) extends PartialGradient[X]  {
         def toNDA = ???
+}
+
+case class PGDropAxis[X <: Shape](child: DropAxis[X], gradient: Gradient[X]) extends PartialGradient[By[One,X]] {
+        def toNDA = gradient.toNDA.newAxis
 }
 
 case object PGOne extends PartialGradient[One] {

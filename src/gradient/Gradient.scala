@@ -1,72 +1,54 @@
 package nda
 import scala.collection.mutable.HashMap
-/*
-case class FullGradient[X](var partialGradients: List[PartialGradient[X,_,_]]) {
-    def register(partialGradient: PartialGradient[X,_,_]) {
-        partialGradients = partialGradient :: partialGradients
+
+class Gradient[X <: Shape] {
+    var parts = List.empty[PartialGradient[X]]
+
+    def register(part: PartialGradient[X]) {
+        parts = part :: parts
     }
 
-    def toNDA: NDA[X] = partialGradients.map{_.toNDA}.reduce{_ + _}
-}
-
-case class PartialGradient[X <: Shape, Z <: Shape, C <: NDA[Z]](child: C, gradient: FullGradient[Z])(
-    fn: (C, NDA[Z]) => NDA[X]
-) {
-    def toNDA: NDA[X] = fn(child, gradient.toNDA)
-}
-
-class Gradient(root: NDA[_]) {
-    val gradients = HashMap.empty[NDA[_], FullGradient[_]]
-
-    register(root)
-    gradients.update(root, Constant(1.0))
-
-    private def addChildToParents(child: NDA[_]) {
-        parents(child).foreach{parent =>
-            val old = children.getOrElse(parent, Nil)
-            children.update(parent, child :: Nil)
-            addChildToParents(parent)
-        }
-    }
-
-    private def parents(child: NDA[_]): List[NDA[_]] {
-        child match {
-            case Variable(_) => Nil
-            case Constant() => Nil
-            case Unary(orig, _) => List(orig)
-            case Reduce(orig, _) => List(orig)
-            case ReduceAll(orig, _) => List(orig)
-            case NewAxis(orig, _) => List(orig)
-            case Binary(left, right, _) => List(left, right)
-        }
-    }
-
-    def gradient[X<:Shape](nda: NDA[X]): Option[NDA[X]] = {
-        registry.get(nda).map{t => t.asInstanceOf[NDA[X]]}
-    }
-
-    def register[X<:Shape](nda: NDA[X], gradient: NDA[X]): Unit = {
-        val newGradient =
-            get(nda)
-                .map{oldGradient => oldGradient + gradient}
-                .getOrElse(gradient)
-
-        registry.update(nda, newGradient)
-        registerParents(nda, newGradient)
-    }
-
-    def registerParents[X<:Shape](nda: NDA[X], gradient: NDA[X]): Unit = {
-        nda match {
-            
-        }`
-    }   
+    def toNDA: NDA[X] = parts.map(_.toNDA).reduce(_ + _)
 }
 
 object Gradient {
-    def derive[X<:Shape](from: NDA[X], to: NDA[One]): NDA[X] = {
-        val gradient = new Gradient(to)
-        gradient.register(to, Constant(1.0))
-        gradient.get(from).getOrElse(error("target does not depend on source"))
+    def derive[X <: Shape](root: NDA[X], loss: NDA[One]): NDA[X] = {
+        val gradients = HashMap.empty[NDA[_], Gradient[_]]
+        def gradient[X<:Shape](nda: NDA[X]): Gradient[X] = {
+            gradients.getOrElseUpdate(nda, new Gradient[X]).asInstanceOf[Gradient[X]]
+        }
+
+        gradient(loss).register(PGOne)
+
+        def register[X<:Shape](nda: NDA[X]) {
+            nda match {
+                case Variable(name) => ()
+                case Constant(value) => ()
+                case b @ Binary(left, right, op) =>
+                    gradient(left).register(PGLeftBinary(b, gradient(b)))
+                    gradient(right).register(PGRightBinary(b, gradient(b)))
+                    register(left)
+                    register(right)
+
+                case u @ Unary(original, op) =>
+                    gradient(original).register(PGUnary(u, gradient(u)))
+                    register(original)
+
+                case r @ Reduce(original, op) =>
+                    gradient(original).register(PGReduce(r, gradient(r)))
+                    register(original)
+
+                case n @ NewAxis(original) =>
+                    gradient(original).register(PGNewAxis(n, gradient(n)))
+                    register(original)
+ 
+                case d @ DropAxis(original) =>
+                    gradient(original).register(PGDropAxis(d, gradient(d)))
+                    register(original)
+            }
+        }
+
+        register(loss)
+        gradient(root).toNDA
     }
 }
-*/

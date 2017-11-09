@@ -36,13 +36,7 @@ trait BroadcasterLowestPriority {
 }
 
 trait BroadcasterLowPriority extends BroadcasterLowestPriority {
-    implicit def one2one = new Broadcaster[One,One,One] {
-        def combine(left: List[Int], right: List[Int]) = left
-        def left(combined: List[Int]) = combined
-        def right(combined: List[Int]) = combined       
-    }
-
-    implicit def n2n[A] = new Broadcaster[N[A],N[A],N[A]]  {
+    implicit def any2any[X <: Shape] = new Broadcaster[X,X,X] {
         def combine(left: List[Int], right: List[Int]) = left
         def left(combined: List[Int]) = combined
         def right(combined: List[Int]) = combined       
