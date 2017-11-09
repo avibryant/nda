@@ -35,10 +35,11 @@ object Regression {
                 .feed(y, yData)
                 .feed(w, wData)
 
-        1.to(10).foldLeft((session,wData)){case ((s,prevW),_) =>
+        1.to(100).foldLeft((session,wData)){case ((s,prevW),_) =>
             println(prevW.toList)
             val currentLoss = s.run(loss)(0)
             println(currentLoss)
+            println(s.run((x * w).sumOuter).toList)
             val gradient = s.run(wGrad)
             val newW = prevW.zip(gradient).map{case (l,r) => l - (r * 0.01)}
             (s.feed(w, newW), newW)
@@ -53,20 +54,34 @@ object Regression {
             )
 
         linearRegression(rows)
-    
+    /*
         println("----")
 
         val a = Variable[N[Columns]]("a")
-        val loss: NDA[One] = (a * a).sum
+        val b = Variable[One]("b")
+        val c = a.sum[One] - b
+        val loss: NDA[One] = c * c
         val aGrad = Gradient.derive(a, loss)
-
-        implicit val r = Columns(3)
+        
+        val aData = Array(1.0, 2.0, 3.0)
+        val bData = Array(10.0)
+        implicit val co = Columns(aData.size / bData.size)
+        implicit val ro = Rows(bData.size)
         val session =
             Session(DoubleEvaluator)
-                .feed(a, Array(1.0, 2.0, 3.0))
-        
-        println(aGrad)
-        println(session.run(loss)(0))
-        println(session.run(aGrad).toList)
+                .feed(a, aData)
+                .feed(b, bData)
+
+        1.to(10).foldLeft((session,aData)){case ((s,prevA),_) =>
+           // println(prevA.toList)
+            println(s.run(c).toList)
+            println(s.run(Gradient.derive(c,loss)).toList)
+            println(s.run(Gradient.derive(a.sum[One],loss)).toList)
+            val currentLoss = s.run(loss)(0)
+           // println(currentLoss)
+            val gradient = s.run(aGrad)
+            val newA = prevA.zip(gradient).map{case (l,r) => l - (r * 0.1)}
+            (s.feed(a, newA), newA)
+        }*/
     }
 }
