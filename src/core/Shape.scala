@@ -2,7 +2,11 @@ package nda
 
 sealed trait Shape
 
-sealed trait Dimension extends Shape
-case class One() extends Dimension
-case class N[A]() extends Dimension
+trait Dimension extends Shape {
+    def n: Int
+}
+case class One() extends Dimension {
+    val n = 1
+}
+
 case class By[D<:Dimension,X<:Shape]() extends Shape

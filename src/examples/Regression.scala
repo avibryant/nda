@@ -1,15 +1,15 @@
 package nda
 
 object Regression {
-    case class Rows(n: Int) extends Cardinality
-    case class Columns(n: Int) extends Cardinality
+    case class Rows(n: Int) extends Dimension
+    case class Columns(n: Int) extends Dimension
 
     def linearRegressionModel = {
-        val w = Variable[N[Columns]]("w")
-        val x = Variable[N[Columns] By N[Rows]]("x")
-        val y = Variable[N[Rows]]("y")
+        val w = Variable[Columns]("w")
+        val x = Variable[Columns By Rows]("x")
+        val y = Variable[Rows]("y")
 
-        val predictions: NDA[N[Rows]] = (x * w).sumOuter
+        val predictions: NDA[Rows] = (x * w).sumOuter
         val errors = predictions - y
         val loss: NDA[One] = (errors * errors).sum
         (x, y, w, loss)
