@@ -16,7 +16,7 @@ object Regression {
     }
 
     val rand = new scala.util.Random
-    def linearRegression(rows: List[(List[Double], Double)]): (Double, List[Double], List[Double]) = {
+    def linearRegression(rows: List[(List[Double], Double)]) {
         val (x, y, w, loss) = linearRegressionModel
         val wGrad = Gradient.derive(w, loss)
         
@@ -35,10 +35,14 @@ object Regression {
                 .feed(y, yData)
                 .feed(w, wData)
 
-        val initialLoss: Array[Double] = session.run(loss)
-        println("--")
-        val initialGradient: Array[Double] = session.run(wGrad)
-        (initialLoss(0), wData.toList, initialGradient.toList)
+        1.to(10).foldLeft((session,wData)){case ((s,prevW),_) =>
+            println(prevW.toList)
+            val currentLoss = s.run(loss)(0)
+            println(currentLoss)
+            val gradient = s.run(wGrad)
+            val newW = prevW.zip(gradient).map{case (l,r) => l - (r * 0.01)}
+            (s.feed(w, newW), newW)
+        }
     }
 
     def main(args: Array[String]) {
@@ -48,6 +52,21 @@ object Regression {
                 (List(2.0,4.0,6.0), 6.0)
             )
 
-        println(linearRegression(rows))
+        linearRegression(rows)
+    
+        println("----")
+
+        val a = Variable[N[Columns]]("a")
+        val loss: NDA[One] = (a * a).sum
+        val aGrad = Gradient.derive(a, loss)
+
+        implicit val r = Columns(3)
+        val session =
+            Session(DoubleEvaluator)
+                .feed(a, Array(1.0, 2.0, 3.0))
+        
+        println(aGrad)
+        println(session.run(loss)(0))
+        println(session.run(aGrad).toList)
     }
 }

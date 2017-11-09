@@ -85,7 +85,7 @@ object DoubleEvaluator extends Evaluator[Double] {
         var i = originalArray.size - 1
         op match {
             case AddOp =>
-                while(i > 0) {
+                while(i >= 0) {
                     val resultIndex = computeIndex(i, originalSize, resultSize)
                     resultArray(resultIndex) += originalArray(i)
                     i -= 1
