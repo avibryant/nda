@@ -4,23 +4,13 @@ trait PartialGradient[X <: Shape] {
     def toNDA: NDA[X]
 }
 
-case class PGLeftBinary[X <: Shape, Y <: Shape, Z <: Shape](child: Binary[X,Y,Z], gradient: Gradient[Z])
+case class PGBinary[X <: Shape, Y <: Shape, Z <: Shape](child: Binary[X,Y,Z], gradient: Gradient[Z])
     extends PartialGradient[X] {
         def toNDA = child.op match {
             case AddOp => Reduce(gradient.toNDA, AddOp)(child.b)
             case MultiplyOp => 
                 implicit val b: Broadcaster[Z, Y, Z] = child.b.rightResult
                 Reduce(gradient.toNDA * child.right, AddOp)(child.b)
-        }
-}
-
-case class PGRightBinary[X <: Shape, Y <: Shape, Z <: Shape](child: Binary[X,Y,Z], gradient: Gradient[Z])
-    extends PartialGradient[Y]  {
-        def toNDA = child.op match {
-            case AddOp => Reduce(gradient.toNDA, AddOp)(child.b.swap)
-            case MultiplyOp => 
-                implicit val b: Broadcaster[Z, X, Z] = child.b.leftResult
-                Reduce(gradient.toNDA * child.left, AddOp)(child.b.swap)
         }
 }
 

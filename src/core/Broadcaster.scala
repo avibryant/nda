@@ -1,5 +1,7 @@
 package nda
 
+//here be dragons
+
 trait Broadcaster[X <: Shape,Y <: Shape,Z <: Shape] {
     def combine(left: List[Int], right: List[Int]): List[Int]
     def left(combined: List[Int]): List[Int]

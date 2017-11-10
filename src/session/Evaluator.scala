@@ -1,8 +1,13 @@
 package nda
 
 trait Evaluator[T] {
-    def binary(left: ShapedArray[T], right: ShapedArray[T], op: BinaryOp): ShapedArray[T]
-    def unary(original: ShapedArray[T], op: UnaryOp): ShapedArray[T]
-    def reduce(original: ShapedArray[T], op: BinaryOp, newSize: List[Int]): ShapedArray[T]
-    def constant(value: Double): ShapedArray[T]
+    def in(size: List[Int], array: Array[Double]): T
+    def out(t: T): Array[Double]
+    def size(t: T): List[Int]
+    def alloc(shape: List[Int]): T
+    def binary(left: T, right: T, result: T, op: BinaryOp): Unit
+    def unary(original: T, result: T, op: UnaryOp): Unit
+    def reduce(original: T, result: T, op: BinaryOp): Unit
+    def newAxis(original: T): T
+    def dropAxis(original: T): T
 }

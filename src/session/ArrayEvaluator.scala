@@ -1,18 +1,24 @@
 package nda
 
+case class ShapedArray(size: List[Int], array: Array[Double])
+
 //this (and only this) is written with performance as the top priority
 //I'm probably making all kinds of incorrect assumptions about what will or won't be fast
 //(eg about what I can expect to be inlined, etc)
-object DoubleEvaluator extends Evaluator[Double] {
-    def constant(value: Double) = ShapedArray(List(1), Array(value))
+object ArrayEvaluator extends Evaluator[ShapedArray] {
+    def in(size: List[Int], array: Array[Double]) = ShapedArray(size, array)
+    def out(t: ShapedArray) = t.array
+    def size(t: ShapedArray) = t.size
 
-    def binary(left: ShapedArray[Double], right: ShapedArray[Double], op: BinaryOp) = {
-        val resultRank = left.size.size.max(right.size.size)
+    def alloc(size: List[Int]): ShapedArray =
+        ShapedArray(size, Array.ofDim[Double](size.reduce(_ * _)))
+
+    def binary(left: ShapedArray, right: ShapedArray, result: ShapedArray, op: BinaryOp) {
+        val resultRank = result.size.size
         val leftSize = pad(left.size, resultRank)
         val rightSize = pad(right.size, resultRank)
-        val resultSize = leftSize.zip(rightSize).map{case (l,r) => l.max(r)}
+        val resultSize = result.size.toArray
 
-        val result = alloc(resultSize.toList)
         val resultArray = result.array
         val leftArray = left.array
         val rightArray = right.array
@@ -35,7 +41,6 @@ object DoubleEvaluator extends Evaluator[Double] {
                     i -= 1
                 }
         }
-        result
     }
 
     //hope this inlines
@@ -56,8 +61,7 @@ object DoubleEvaluator extends Evaluator[Double] {
         k
     }
 
-    def unary(original: ShapedArray[Double], op: UnaryOp) = {
-        val result = alloc(original.size)
+    def unary(original: ShapedArray, result: ShapedArray, op: UnaryOp) {
         val originalArray = original.array
         val resultArray = result.array
         var i = originalArray.size - 1
@@ -68,13 +72,11 @@ object DoubleEvaluator extends Evaluator[Double] {
                     i -= 1
                 }                
         }
-        result
     }
 
-    def reduce(original: ShapedArray[Double], op: BinaryOp, newSize: List[Int]) = {
-        val result = alloc(newSize)
+    def reduce(original: ShapedArray, result: ShapedArray, op: BinaryOp) {
         val resultArray = result.array
-        val resultSize = pad(result.size, original.size.size).toArray
+        val resultSize = pad(result.size, original.size.size)
         val originalArray = original.array
         val originalSize = original.size.toArray
         var i = originalArray.size - 1
@@ -87,11 +89,10 @@ object DoubleEvaluator extends Evaluator[Double] {
                 }
             case MultiplyOp => ???
         }
-        result
     }
 
-    private def alloc(size: List[Int]) =
-        ShapedArray(size, Array.ofDim[Double](size.reduce(_ * _)))
+    def newAxis(original: ShapedArray): ShapedArray = ShapedArray(1 :: original.size, original.array)
+    def dropAxis(original: ShapedArray): ShapedArray = ShapedArray(original.size.tail, original.array)
 
     private def pad(size: List[Int], rank: Int): Array[Int] = 
         (size ++ List.fill(rank - size.size)(1)).toArray

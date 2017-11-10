@@ -29,7 +29,7 @@ object Regression {
         implicit val nColumns = Columns(rowWidth)
 
         val initialSession =
-            Session(DoubleEvaluator)
+            Session(ArrayEvaluator)
                 .feed(x, xData)
                 .feed(y, yData)
                 .feed(w, wData)

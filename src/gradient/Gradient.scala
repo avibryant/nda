@@ -28,8 +28,8 @@ object Gradient {
                     case Variable(name) => ()
                     case Constant(value) => ()
                     case b @ Binary(left, right, op) =>
-                        gradient(left).register(PGLeftBinary(b, gradient(b)))
-                        gradient(right).register(PGRightBinary(b, gradient(b)))
+                        gradient(left).register(PGBinary(b, gradient(b)))
+                        gradient(right).register(PGBinary(Binary(right, left, op)(b.b.swap), gradient(b)))
                         visit(left)
                         visit(right)
 
