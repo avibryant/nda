@@ -2,11 +2,11 @@ package nda
 
 import scala.collection.mutable.HashMap
 
-case class Session[T](evaluator: Evaluator[T], variables: Map[String,T], cache: HashMap[NDA[_],T]) {
+case class Session[T](evaluator: Evaluator[T], variables: Map[Variable[_],T], cache: HashMap[NDA[_],T]) {
     def feed[X<:Shape](variable: Variable[X], array: Array[Double])(implicit shape: X): Session[T] =
         Session(
             evaluator,
-            variables + (variable.name -> evaluator.in(shape.toList, array)), 
+            variables + (variable -> evaluator.in(shape.toList, array)), 
             HashMap[NDA[_],T]())
     
     def run(nda: NDA[_]): Array[Double] =
@@ -19,7 +19,7 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[String,T], cache: 
         cache.get(nda) match {
             case Some(t) => t
             case None => nda match {
-                case Variable(name) => variables(name)
+                case v: Variable[_] => variables(v)
                 case Constant(value) => evaluator.in(List(1), Array(value))
                 case binary @ Binary(left, right, op) =>
                     val a1 = forwards(left)

@@ -25,7 +25,7 @@ object Gradient {
             if(!visited.contains(nda)) {
                 visited += nda
                 nda match {
-                    case Variable(name) => ()
+                    case v: Variable[_] => ()
                     case Constant(value) => ()
                     case b @ Binary(left, right, op) =>
                         gradient(left).register(PGBinary(b, gradient(b)))

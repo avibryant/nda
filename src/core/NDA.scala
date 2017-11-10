@@ -20,7 +20,7 @@ sealed trait NDA[X<:Shape] {
     def identity = Unary(this, IdentityOp)
 }
 
-case class Variable[X <: Shape](name: String) extends NDA[X]
+class Variable[X <: Shape] extends NDA[X] {}
 
 case class Constant(value: Double) extends NDA[One]
 

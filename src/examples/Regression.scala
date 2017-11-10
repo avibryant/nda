@@ -5,9 +5,9 @@ object Regression {
     case class Columns(n: Int) extends Dimension
 
     def linearRegressionModel = {
-        val w = Variable[Columns]("w")
-        val x = Variable[Columns By Rows]("x")
-        val y = Variable[Rows]("y")
+        val w = new Variable[Columns]
+        val x = new Variable[Columns By Rows]
+        val y = new Variable[Rows]
 
         val predictions: NDA[Rows] = (x * w).sumOuter
         val errors = predictions - y
