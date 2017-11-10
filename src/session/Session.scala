@@ -3,16 +3,16 @@ package nda
 import scala.collection.mutable.HashMap
 
 case class Session[T](evaluator: Evaluator[T], variables: Map[String,ShapedArray[T]], cache: HashMap[NDA[_],ShapedArray[T]]) {
-    def feed[X<:Shape](variable: Variable[X], array: Array[T])(implicit size: Size[X]): Session[T] =
+    def feed[X<:Shape](variable: Variable[X], array: Array[T])(implicit shape: X): Session[T] =
         Session(
             evaluator,
-            variables + (variable.name -> ShapedArray(size.toList, array)), 
+            variables + (variable.name -> ShapedArray(shape.toList, array)), 
             HashMap[NDA[_],ShapedArray[T]]())
     
     def run(nda: NDA[_]): Array[T] =
         forwards(nda).array
 
-    def update[X <: Shape : Size](from: Variable[X], to: NDA[X]): Session[T] = feed(from, run(to))
+    def update[X <: Shape](from: Variable[X], to: NDA[X])(implicit shape: X): Session[T] = feed(from, run(to))
 
     private def forwards[_](nda: NDA[_]): ShapedArray[T] =
         cache.get(nda) match {

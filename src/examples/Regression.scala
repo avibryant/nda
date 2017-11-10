@@ -38,12 +38,12 @@ object Regression {
         finalSession.run(w).toList
     }
 
-    def optimize[T, X <: Shape : Size](initialSession: Session[T], variable: Variable[X], loss: NDA[One], learningRate: Double, iterations: Int): Session[T] = {
+    def optimize[T, X <: Shape](initialSession: Session[T], variable: Variable[X], loss: NDA[One], learningRate: Double, iterations: Int)(implicit shape: X): Session[T] = {
         val grad = Gradient.derive(variable, loss)
         1.to(iterations).foldLeft(initialSession){case (s,_) =>
             val currentLoss = s.run(loss)(0)
             println(s"Loss: $currentLoss")
-            s.update(variable, variable - (grad * Constant(learningRate)))
+            s.update(variable, variable - (grad * learningRate))
         }
     }
 

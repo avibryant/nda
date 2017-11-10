@@ -5,7 +5,8 @@ sealed trait NDA[X<:Shape] {
         Binary(this, other, AddOp)
     def *[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcaster[X,Y,Z]): NDA[Z] =
         Binary(this, other, MultiplyOp)
-    def unary_- = Unary(this, MinusOp)
+    def *(constant: Double): NDA[X] = this * Constant(constant)
+    def unary_- = this * -1.0
     def -[Y<:Shape, Z<:Shape](other: NDA[Y])(implicit b: Broadcaster[X,Y,Z]): NDA[Z] =
         this + -other
     def dropAxis[Y <: Shape](implicit ev: X <:< By[One,Y]): NDA[Y] =

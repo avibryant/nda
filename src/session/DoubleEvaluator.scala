@@ -62,11 +62,6 @@ object DoubleEvaluator extends Evaluator[Double] {
         val resultArray = result.array
         var i = originalArray.size - 1
         op match {
-            case MinusOp =>
-                while(i >= 0) {
-                    resultArray(i) = originalArray(i) * -1
-                    i -= 1
-                }
             case IdentityOp =>
                 while(i >= 0) {
                     resultArray(i) = 1.0
@@ -93,11 +88,6 @@ object DoubleEvaluator extends Evaluator[Double] {
             case MultiplyOp => ???
         }
         result
-    }
-
-    private def zero(op: BinaryOp): Double = op match {
-        case AddOp => 0.0
-        case MultiplyOp => 1.0
     }
 
     private def alloc(size: List[Int]) =

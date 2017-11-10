@@ -26,8 +26,7 @@ case class PGRightBinary[X <: Shape, Y <: Shape, Z <: Shape](child: Binary[X,Y,Z
 
 case class PGUnary[X <: Shape](child: Unary[X], gradient: Gradient[X]) extends PartialGradient[X]  {
         def toNDA = child.op match {
-            case IdentityOp => child * Constant(0.0)
-            case MinusOp => gradient.toNDA * Constant(-1.0)
+            case IdentityOp => child * 0.0
         }
 }
 
@@ -41,7 +40,7 @@ case class PGReduce[X <: Shape, Y <: Shape](child: Reduce[X,Y], gradient: Gradie
 }
 
 case class PGNewAxis[X <: Shape](child: NewAxis[X], gradient: Gradient[By[One,X]]) extends PartialGradient[X]  {
-        def toNDA = ???
+        def toNDA = gradient.toNDA.dropAxis
 }
 
 case class PGDropAxis[X <: Shape](child: DropAxis[X], gradient: Gradient[X]) extends PartialGradient[By[One,X]] {
