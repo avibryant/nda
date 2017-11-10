@@ -16,7 +16,7 @@ object Regression {
     }
 
     val rand = new scala.util.Random
-    def linearRegression(rows: List[(List[Double], Double)], iterations: Int): List[Double] = {        
+    def linearRegression(rows: List[(List[Double], Double)], iterations: Int) {        
         val rowWidth = rows.head._1.size
         val wData: Array[Double] = 1.to(rowWidth).toArray.map{i => rand.nextGaussian}
         
@@ -34,8 +34,8 @@ object Regression {
                 .feed(y, yData)
                 .feed(w, wData)
 
-        val finalSession = optimize(initialSession, w, loss, 0.01, iterations)
-        finalSession.run(w).toList
+        val finalSession = optimize(initialSession, w, loss, 0.005, iterations)
+        println(finalSession.run(w).toList)
     }
 
     def optimize[T, X <: Shape](initialSession: Session[T], variable: Variable[X], loss: NDA[One], learningRate: Double, iterations: Int): Session[T] = {
@@ -51,9 +51,10 @@ object Regression {
         val rows: List[(List[Double], Double)] =         
             List(
                 (List(1.0,2.0,3.0), 3.0),
-                (List(-2.0,0.0,6.0), 6.0)
+                (List(-2.0,0.0,6.0), 6.0),
+                (List(1.0,2.0,9.0), 9.0)
             )
 
-        println(linearRegression(rows, 100))
+        linearRegression(rows, 1000)
     }
 }
