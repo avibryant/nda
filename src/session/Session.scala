@@ -4,18 +4,21 @@ import scala.collection.mutable.HashMap
 
 case class Session[T](evaluator: Evaluator[T], variables: Map[Variable[_],T], cache: HashMap[NDA[_],T]) {
     def feed[X<:Shape](variable: Variable[X], array: Array[Double])(implicit shape: X): Session[T] =
-        Session(
-            evaluator,
-            variables + (variable -> evaluator.in(shape.toList, array)), 
-            HashMap[NDA[_],T]())
+        basicFeed(variable, evaluator.in(shape.toList, array))
     
     def run(nda: NDA[_]): Array[Double] =
         evaluator.out(forwards(nda))
 
-    def update[X <: Shape](from: Variable[X], to: NDA[X])(implicit shape: X): Session[T] =
-        feed(from, run(to))
+    def update[X <: Shape](from: Variable[X], to: NDA[X]): Session[T] =
+        basicFeed(from, forwards(to))
 
-    private def forwards[_](nda: NDA[_]): T =
+    private def basicFeed[X <: Shape](variable: Variable[X], t: T): Session[T] = 
+        Session(
+            evaluator,
+            variables + (variable -> t), 
+            HashMap[NDA[_],T]())
+        
+    private def forwards(nda: NDA[_]): T =
         cache.get(nda) match {
             case Some(t) => t
             case None => nda match {
