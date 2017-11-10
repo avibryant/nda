@@ -18,6 +18,8 @@ sealed trait NDA[X<:Shape] {
     def sumOuter[Y <: Shape](implicit r: Reducer[X, By[One,Y]]): NDA[Y] =
         sum[By[One,Y]].dropAxis
     def identity = Unary(this, IdentityOp)
+    def tanh = Unary(this, TanhOp)
+    def log = Unary(this, LogOp)
 }
 
 class Variable[X <: Shape] extends NDA[X] {}
