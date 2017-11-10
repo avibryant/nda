@@ -24,10 +24,10 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[Variable[_],T], ca
             case None => nda match {
                 case v: Variable[_] => variables(v)
                 case Constant(value) => evaluator.in(List(1), Array(value))
-                case binary @ Binary(left, right, op) =>
+                case Binary(left, right, op, bcast) =>
                     val a1 = forwards(left)
                     updateCache(right, nda){a2 => 
-                        val result = evaluator.alloc(binary.b.combine(evaluator.size(a1), evaluator.size(a2)))
+                        val result = evaluator.alloc(bcast(evaluator.size(a1), evaluator.size(a2)))
                         evaluator.binary(a1, a2, result, op)
                         result
                     }
@@ -39,9 +39,9 @@ case class Session[T](evaluator: Evaluator[T], variables: Map[Variable[_],T], ca
                         result
                     }
 
-                case r @ Reduce(original, op) =>
+                case Reduce(original, op, red) =>
                     updateCache(original, nda){a => 
-                        val result = evaluator.alloc(r.b.left(evaluator.size(a)))
+                        val result = evaluator.alloc(red(evaluator.size(a)))
                         evaluator.reduce(a, result, op)
                         result
                     }

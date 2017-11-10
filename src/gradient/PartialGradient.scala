@@ -6,11 +6,15 @@ trait PartialGradient[X <: Shape] {
 
 case class PGBinary[X <: Shape, Y <: Shape, Z <: Shape](child: Binary[X,Y,Z], gradient: Gradient[Z])
     extends PartialGradient[X] {
-        def toNDA = child.op match {
-            case AddOp => Reduce(gradient.toNDA, AddOp)(child.b)
-            case MultiplyOp => 
-                implicit val b: Broadcaster[Z, Y, Z] = child.b.rightResult
-                Reduce(gradient.toNDA * child.right, AddOp)(child.b)
+        def toNDA = {
+            implicit val red = child.broadcaster.leftReducer
+            child.op match {
+                case AddOp => gradient.toNDA.sum[X]
+                case MultiplyOp => 
+                    implicit val bcast = child.broadcaster.rightReducer.toBroadcaster
+                    val weightedGrad = gradient.toNDA * child.right
+                    weightedGrad.sum[X]
+            }
         }
 }
 
@@ -23,8 +27,8 @@ case class PGUnary[X <: Shape](child: Unary[X], gradient: Gradient[X]) extends P
 case class PGReduce[X <: Shape, Y <: Shape](child: Reduce[X,Y], gradient: Gradient[Y]) extends PartialGradient[X]  {
         def toNDA = child.op match {
             case AddOp =>
-                implicit val b: Broadcaster[X,Y,X] = child.b.leftResult
-                 child.original.identity * gradient.toNDA
+                implicit val b: Broadcaster[X,Y,X] = child.reducer.toBroadcaster
+                child.original.identity * gradient.toNDA
             case MultiplyOp => ???
         }
 }

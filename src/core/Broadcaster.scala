@@ -3,59 +3,51 @@ package nda
 //here be dragons
 
 trait Broadcaster[X <: Shape,Y <: Shape,Z <: Shape] {
-    def combine(left: List[Int], right: List[Int]): List[Int]
-    def left(combined: List[Int]): List[Int]
-    def right(combined: List[Int]): List[Int]
+    def apply(left: List[Int], right: List[Int]): List[Int]
     def swap: Broadcaster[Y,X,Z] = SwapBroadcaster(this) 
-    def rightResult: Broadcaster[Z,Y,Z] = RightBroadcaster(this)
-    def leftResult: Broadcaster[Z,X,Z] = swap.rightResult
+    def leftReducer: Reducer[Z,X]
+    def rightReducer: Reducer[Z,Y]
 }
 
 case class SwapBroadcaster[X <: Shape,Y <: Shape,Z <: Shape](original: Broadcaster[Y,X,Z])
     extends Broadcaster[X,Y,Z] {
     
-    def combine(left: List[Int], right: List[Int]) = original.combine(right, left)
-    def left(combined: List[Int]) = original.right(combined)
-    def right(combined: List[Int]) = original.left(combined)
-}
-
-case class RightBroadcaster[X <: Shape, Y <: Shape, Z <: Shape](original: Broadcaster[Y,X,Z])
-    extends Broadcaster[Z,X,Z] {
-
-    def combine(left: List[Int], right: List[Int]) = left
-    def left(combined: List[Int]) = combined
-    def right(combined: List[Int]) = original.right(combined)
+    def apply(left: List[Int], right: List[Int]) = original(right, left)
+    val leftReducer = original.rightReducer
+    val rightReducer = original.leftReducer
 }
 
 trait BroadcasterLowestPriority {
     implicit def one2Any[X<:Shape] = new Broadcaster[One,X,X]{
-        def combine(left: List[Int], right: List[Int]) = right
-        def left(combined: List[Int]) = List(1)
-        def right(combined: List[Int]) = combined
+        def apply(left: List[Int], right: List[Int]) = right
+        val leftReducer = new Reducer[X, One] {
+            def apply(size: List[Int]) = List(1)
+        }
+        val rightReducer = Reducer.identity[X]
     }
 
-    implicit def any2one[X<:Shape] = one2Any[X].swap
+  implicit def swap[X <: Shape, Y <: Shape, Z <: Shape](implicit b: Broadcaster[X,Y,Z]): Broadcaster[Y,X,Z] = b.swap
 }
 
 trait BroadcasterLowPriority extends BroadcasterLowestPriority {
     implicit def any2any[X <: Shape] = new Broadcaster[X,X,X] {
-        def combine(left: List[Int], right: List[Int]) = left
-        def left(combined: List[Int]) = combined
-        def right(combined: List[Int]) = combined       
+        def apply(left: List[Int], right: List[Int]) = left
+        def leftReducer = Reducer.identity[X]
+        def rightReducer = Reducer.identity[X]
     }
     
     implicit def dim2By[X <: Dimension, Y <: Dimension, Z <: Dimension, B <: Shape](
         implicit outerBroadcaster: Broadcaster[X, Y, Z]
     ) = new Broadcaster[X, By[Y,B], By[Z,B]] {
-        def combine(left: List[Int], right: List[Int]) = 
-            outerBroadcaster.combine(left, right.take(1)) ++ right.tail
-        def left(combined: List[Int]) = outerBroadcaster.left(combined.take(1))
-        def right(combined: List[Int]) = outerBroadcaster.right(combined.take(1)) ++ combined.tail
+        def apply(left: List[Int], right: List[Int]) = 
+            outerBroadcaster(left, right.take(1)) ++ right.tail
+        def leftReducer = new Reducer[By[Z,B],X] {
+            def apply(size: List[Int]) = outerBroadcaster.leftReducer(size.take(1))
+        }
+        def rightReducer = new Reducer[By[Z,B],By[Y,B]] {
+            def apply(size: List[Int]) = outerBroadcaster.rightReducer(size.take(1)) ++ size.tail
+        }
     }
-
-    implicit def by2Dim[X <: Dimension, Y <: Dimension, Z <: Dimension, B <: Shape](
-        implicit outerBroadcaster: Broadcaster[X, Y, Z]
-    ) = dim2By[Y,X,Z,B](outerBroadcaster.swap).swap
 }
 
 object Broadcaster extends BroadcasterLowPriority {
@@ -63,9 +55,13 @@ object Broadcaster extends BroadcasterLowPriority {
         implicit outerBroadcaster: Broadcaster[X,Y,Z],
         innerBroadcaster: Broadcaster[B,C,D]        
     ) = new Broadcaster[By[X,B],By[Y,C],By[Z,D]] {
-        def combine(left: List[Int], right: List[Int]) = 
-            outerBroadcaster.combine(left.take(1), right.take(1)) ++ innerBroadcaster.combine(left.tail, right.tail)
-        def left(combined: List[Int]) = outerBroadcaster.left(combined.take(1)) ++ innerBroadcaster.left(combined.tail)
-        def right(combined: List[Int]) = outerBroadcaster.right(combined.take(1)) ++ innerBroadcaster.right(combined.tail)       
+        def apply(left: List[Int], right: List[Int]) = 
+            outerBroadcaster(left.take(1), right.take(1)) ++ innerBroadcaster(left.tail, right.tail)
+        def leftReducer = new Reducer[By[Z,D],By[X,B]] {
+            def apply(size: List[Int]) = outerBroadcaster.leftReducer(size.take(1)) ++ innerBroadcaster.leftReducer(size.tail)
+        }
+        def rightReducer = new Reducer[By[Z,D], By[Y,C]] {
+            def apply(size: List[Int]) = outerBroadcaster.rightReducer(size.take(1)) ++ innerBroadcaster.rightReducer(size.tail)
+        }
     }
 }

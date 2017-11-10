@@ -27,9 +27,9 @@ object Gradient {
                 nda match {
                     case v: Variable[_] => ()
                     case Constant(value) => ()
-                    case b @ Binary(left, right, op) =>
+                    case b @ Binary(left, right, op, bcast) =>
                         gradient(left).register(PGBinary(b, gradient(b)))
-                        gradient(right).register(PGBinary(Binary(right, left, op)(b.b.swap), gradient(b)))
+                        gradient(right).register(PGBinary(Binary(right, left, op, bcast.swap), gradient(b)))
                         visit(left)
                         visit(right)
 
@@ -37,7 +37,7 @@ object Gradient {
                         gradient(original).register(PGUnary(u, gradient(u)))
                         visit(original)
 
-                    case r @ Reduce(original, op) =>
+                    case r @ Reduce(original, op, red) =>
                         gradient(original).register(PGReduce(r, gradient(r)))
                         visit(original)
 

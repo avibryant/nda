@@ -51,9 +51,9 @@ object Regression {
         val rows: List[(List[Double], Double)] =         
             List(
                 (List(1.0,2.0,3.0), 3.0),
-                (List(2.0,4.0,6.0), 6.0)
+                (List(-2.0,0.0,6.0), 6.0)
             )
 
-        println(linearRegression(rows, 20))
+        println(linearRegression(rows, 100))
     }
 }
